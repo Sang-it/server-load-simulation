@@ -1,0 +1,42 @@
+scenarios:
+  - name: Testing Node
+    description: Node with 1 server
+    duration: 30
+    num_servers: 1
+    hardware: ENTERPRISE
+    language: NODEJS
+    base_request_rate: 5.0
+    traffic_pattern: POISSON
+    balancing_strategy: LEAST_CONNECTIONS
+    request_processing_time: 100.0
+    request_timeout: 30000.0
+    random_seed: 42
+    processing_time_stddev: 30.0
+    processing_time_distribution: LOGNORMAL
+    network_latency_mean: 20.0
+    network_latency_stddev: 2.0
+    spikes:
+      - start_time: 100.0
+        duration: 100.0
+        intensity_multiplier: 15.0
+
+
+  - name: Testing Python
+    description: Node with 1 server
+    duration: 30
+    num_servers: 1
+    hardware: ENTERPRISE
+    language: PYTHON
+    base_request_rate: 5.0
+    balancing_strategy: LEAST_CONNECTIONS
+    request_processing_time: 100.0
+    request_timeout: 30000.0
+    random_seed: 42
+    processing_time_stddev: 30.0
+    processing_time_distribution: LOGNORMAL
+    network_latency_mean: 20.0
+    network_latency_stddev: 2.0
+    spikes:
+      - start_time: 100.0
+        duration: 100.0
+        intensity_multiplier: 15.0
