@@ -82,25 +82,43 @@ class ProgrammingLanguageProfile:
 
 
 ProgrammingLanguageProfile.PYTHON = ProgrammingLanguageProfile(
-    name="Python", efficiency_factor=1.8, memory_overhead=50, startup_time=2000
+    name="Python",
+    efficiency_factor=2.0,
+    memory_overhead=150,
+    startup_time=450,
 )
 
 ProgrammingLanguageProfile.NODEJS = ProgrammingLanguageProfile(
-    name="Node.js", efficiency_factor=3.0, memory_overhead=30, startup_time=500
+    name="Node.js",
+    efficiency_factor=4.0,
+    memory_overhead=120,
+    startup_time=300,
 )
 
 ProgrammingLanguageProfile.JAVA = ProgrammingLanguageProfile(
-    name="Java", efficiency_factor=4.8, memory_overhead=100, startup_time=3000
+    name="Java",
+    efficiency_factor=8.0,
+    memory_overhead=220,
+    startup_time=800,
 )
 
 ProgrammingLanguageProfile.GO = ProgrammingLanguageProfile(
-    name="Go", efficiency_factor=10.8, memory_overhead=10, startup_time=100
+    name="Go",
+    efficiency_factor=15.0,
+    memory_overhead=70,
+    startup_time=150,
 )
 
 ProgrammingLanguageProfile.RUST = ProgrammingLanguageProfile(
-    name="Rust", efficiency_factor=21.0, memory_overhead=5, startup_time=50
+    name="Rust",
+    efficiency_factor=22.0,
+    memory_overhead=50,
+    startup_time=80,
 )
 
 ProgrammingLanguageProfile.DOTNET = ProgrammingLanguageProfile(
-    name=".NET", efficiency_factor=6.0, memory_overhead=80, startup_time=1500
+    name=".NET",
+    efficiency_factor=7.0,
+    memory_overhead=180,
+    startup_time=600,
 )
