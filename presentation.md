@@ -25,7 +25,7 @@ Agenda
 Problem: Why Simulation?
 ===
 
-## The Challenge
+## The Problem
 
 - **Capacity Planning**: How many servers do we need?
 - **Performance Prediction**: Will our system handle peak traffic?
@@ -158,14 +158,15 @@ We'll compare **3 programming languages** under identical conditions:
 
 ## Languages Tested
 
-1. **Python** (efficiency: 1.8x)
-2. **Node.js** (efficiency: 3.0x)
-3. **Go** (efficiency: 10.8x)
+1. **Python**
+2. **Node.js**
+3. **Go**
 
 <!-- end_slide -->
 
 <!-- alignment: center -->
 ## Running the Simulation
+
 
 ```bash +exec
 python main.py --config config.yaml --time-scale=0.01 --short-output
@@ -174,6 +175,7 @@ python main.py --config config.yaml --time-scale=0.01 --short-output
 ```bash +exec
 python _visualize.py --short-output
 ```
+
 <!-- end_slide -->
 
 Results Analysis
