@@ -15,6 +15,7 @@ def run_scenarios_from_config(
     time_scale=None,
     export_format="json",
     comparison=False,
+    short_output=False,
 ):
     config_path = Path(config_file)
 
@@ -25,7 +26,8 @@ def run_scenarios_from_config(
         sys.exit(1)
 
     if scenario_name:
-        print(f"\nLoading scenario '{scenario_name}' from {config_file}...")
+        if not short_output:
+            print(f"\nLoading scenario '{scenario_name}' from {config_file}...")
         scenario = ConfigLoader.load_scenario_by_name(config_path, scenario_name)
         if not scenario:
             print(
@@ -37,7 +39,8 @@ def run_scenarios_from_config(
             sys.exit(1)
         scenarios_to_run = [scenario]
     else:
-        print(f"\nLoading all scenarios from {config_file}...")
+        if not short_output:
+            print(f"\nLoading all scenarios from {config_file}...")
         scenarios_to_run = load_scenarios(config_file)
 
         if not scenarios_to_run:
@@ -59,40 +62,56 @@ def run_scenarios_from_config(
         if time_scale is not None:
             scenario.time_scale = time_scale
 
-        print(f"\n{'=' * 80}")
-        print(f"Running scenario: {scenario.name}")
-        print(f"  Duration: {scenario.duration}s (simulation time)")
-        print(
-            f"  Time Scale: {scenario.time_scale}x ({scenario.duration * scenario.time_scale:.1f}s wall-clock)"
-        )
-        print(f"{'=' * 80}\n")
+        if not short_output:
+            print(f"\n{'=' * 80}")
+            print(f"Running scenario: {scenario.name}")
+            print(f"  Duration: {scenario.duration}s (simulation time)")
+            print(
+                f"  Time Scale: {scenario.time_scale}x ({scenario.duration * scenario.time_scale:.1f}s wall-clock)"
+            )
+            print(f"{'=' * 80}\n")
 
         try:
-            simulator = LoadSimulator(scenario)
+            simulator = LoadSimulator(scenario, show_progress=not short_output)
             simulator.run()
             results = simulator.get_results()
             results_list.append(results)
 
             metrics = results["metrics"]
-            print(f"Results for {scenario.name}:")
-            print(f"  - Servers: {scenario.num_servers}")
-            print(f"  - Duration: {scenario.duration}s")
-            print(f"  - Total Requests: {metrics['total_requests']}")
-            print(f"  - Avg Response Time: {metrics['avg_response_time_ms']:.2f} ms")
-            print(f"  - Throughput: {metrics['successful_throughput_rps']:.2f} RPS")
-            print(f"  - Success Rate: {metrics['success_rate'] * 100:.1f}%")
+
+            if short_output:
+                # Single-line condensed output
+                results_file = output_dir / f"{scenario.name}.json"
+                print(
+                    f"{scenario.name}: {metrics['total_requests']} reqs, "
+                    f"{metrics['avg_response_time_ms']:.1f}ms avg, "
+                    f"{metrics['successful_throughput_rps']:.1f} RPS, "
+                    f"{metrics['success_rate'] * 100:.0f}% success"
+                )
+            else:
+                print(f"Results for {scenario.name}:")
+                print(f"  - Servers: {scenario.num_servers}")
+                print(f"  - Duration: {scenario.duration}s")
+                print(f"  - Total Requests: {metrics['total_requests']}")
+                print(
+                    f"  - Avg Response Time: {metrics['avg_response_time_ms']:.2f} ms"
+                )
+                print(f"  - Throughput: {metrics['successful_throughput_rps']:.2f} RPS")
+                print(f"  - Success Rate: {metrics['success_rate'] * 100:.1f}%")
 
             if export_format in ["json", "both"]:
                 results_file = output_dir / f"{scenario.name}.json"
                 with open(results_file, "w") as f:
                     json.dump(results, f, indent=2)
-                print(f"  - Results saved to: {results_file}")
+                if not short_output:
+                    print(f"  - Results saved to: {results_file}")
 
             if export_format in ["csv", "both"]:
                 csv_file = export_results(
                     results, output_dir, format="csv", basename=scenario.name
                 )
-                print(f"  - CSV export saved to: {csv_file}")
+                if not short_output:
+                    print(f"  - CSV export saved to: {csv_file}")
 
         except ValueError as e:
             print(
@@ -108,13 +127,18 @@ def run_scenarios_from_config(
             continue
 
     if results_list:
-        print(f"\n{'=' * 80}")
-        print("SIMULATION COMPLETE")
-        print(f"{'=' * 80}\n")
-        print(f"Results saved to {output_dir}/")
-        print(f"Total scenarios executed: {len(results_list)}")
+        if short_output:
+            print(
+                f"Completed {len(results_list)} scenario(s). Results in {output_dir}/"
+            )
+        else:
+            print(f"\n{'=' * 80}")
+            print("SIMULATION COMPLETE")
+            print(f"{'=' * 80}\n")
+            print(f"Results saved to {output_dir}/")
+            print(f"Total scenarios executed: {len(results_list)}")
 
-        if len(results_list) > 1:
+        if len(results_list) > 1 and not short_output:
             if comparison:
                 comparison_file = export_comparison(results_list, output_dir)
                 print(f"Comparison report saved to: {comparison_file}")
@@ -231,24 +255,35 @@ def parse_arguments():
         help="Generate comparison CSV when running multiple scenarios",
     )
 
+    parser.add_argument(
+        "--short-output",
+        action="store_true",
+        help="Minimal output: no progress bars, only key metrics",
+    )
+
     return parser.parse_args()
 
 
 def main():
     args = parse_arguments()
+    short_output = getattr(args, "short_output", False)
 
-    print("\n" + "=" * 80)
-    print("SERVER LOAD DYNAMICS SIMULATOR")
-    print("=" * 80)
-    print("\nThis simulator models server behavior under different traffic patterns,")
-    print("hardware configurations, and load balancing strategies.\n")
+    if not short_output:
+        print("\n" + "=" * 80)
+        print("SERVER LOAD DYNAMICS SIMULATOR")
+        print("=" * 80)
+        print(
+            "\nThis simulator models server behavior under different traffic patterns,"
+        )
+        print("hardware configurations, and load balancing strategies.\n")
 
     if args.validate:
         validate_config(args.validate, verbose=args.verbose)
         return
 
     if args.list:
-        print(f"Loading scenarios from {args.config}...\n")
+        if not short_output:
+            print(f"Loading scenarios from {args.config}...\n")
         list_scenarios(args.config)
     else:
         run_scenarios_from_config(
@@ -257,6 +292,7 @@ def main():
             args.time_scale,
             export_format=args.export_format,
             comparison=args.comparison,
+            short_output=short_output,
         )
 
 

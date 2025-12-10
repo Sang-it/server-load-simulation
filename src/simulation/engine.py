@@ -162,10 +162,11 @@ class LoadSimulator:
     METRICS_UPDATE_INTERVAL_S = 1.0
     PROGRESS_UPDATE_INTERVAL_S = 0.1
 
-    def __init__(self, scenario: SimulationScenario):
+    def __init__(self, scenario: SimulationScenario, show_progress: bool = True):
         self.scenario = scenario
         self.env = simpy.Environment()
         self.metrics_collector = MetricsCollector()
+        self.show_progress = show_progress
 
         self.servers: List[Server] = []
         self.request_counter = 0
@@ -245,12 +246,13 @@ class LoadSimulator:
         time_scale = self.scenario.time_scale if self.scenario.time_scale > 0 else 1.0
         target_duration = self.scenario.duration * time_scale
 
-        progress_thread = threading.Thread(
-            target=self._display_progress,
-            args=(start_time, target_duration),
-            daemon=True,
-        )
-        progress_thread.start()
+        if self.show_progress:
+            progress_thread = threading.Thread(
+                target=self._display_progress,
+                args=(start_time, target_duration),
+                daemon=True,
+            )
+            progress_thread.start()
 
         self.env.run()
 
@@ -260,11 +262,12 @@ class LoadSimulator:
         if remaining_time > 0:
             time.sleep(remaining_time)
 
-        progress_bar = "█" * 40
-        sys.stdout.write(
-            f"\r[{progress_bar}] 100.0% ({self.scenario.duration:.1f}s/{self.scenario.duration:.1f}s)\n"
-        )
-        sys.stdout.flush()
+        if self.show_progress:
+            progress_bar = "█" * 40
+            sys.stdout.write(
+                f"\r[{progress_bar}] 100.0% ({self.scenario.duration:.1f}s/{self.scenario.duration:.1f}s)\n"
+            )
+            sys.stdout.flush()
 
     def _display_progress(self, start_time: float, target_duration: float) -> None:
         import time

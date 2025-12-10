@@ -9,10 +9,16 @@ import numpy as np
 
 
 class ResultsVisualizer:
-    def __init__(self, results_dir: str = "results", output_dir: Optional[str] = None):
+    def __init__(
+        self,
+        results_dir: str = "results",
+        output_dir: Optional[str] = None,
+        short_output: bool = False,
+    ):
         self.results_dir = Path(results_dir)
         self.output_dir = Path(output_dir) if output_dir else self.results_dir
         self.results = {}
+        self.short_output = short_output
         self.load_results()
         self.create_output_dir()
 
@@ -38,20 +44,26 @@ class ResultsVisualizer:
     def create_output_dir(self) -> None:
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        print(f"Loaded {len(self.results)} simulation results")
+        if not self.short_output:
+            print(f"Loaded {len(self.results)} simulation results")
 
-    def create_all_visualizations(self) -> None:
-        self.visualize_response_times()
-        self.visualize_throughput()
-        self.visualize_success_rates()
-        self.visualize_queue_times()
-        self.visualize_per_server_distribution()
-        self.visualize_comparative_dashboard()
+    def create_all_visualizations(self) -> int:
+        """Create all visualizations and return count of visualizations created."""
+        count = 0
+        count += self.visualize_response_times()
+        count += self.visualize_throughput()
+        count += self.visualize_success_rates()
+        count += self.visualize_queue_times()
+        count += self.visualize_per_server_distribution()
+        count += self.visualize_comparative_dashboard()
 
-        print("\nAll visualizations created successfully!")
-        print("   Open the PNG files to view the results")
+        if not self.short_output:
+            print("\nAll visualizations created successfully!")
+            print("   Open the PNG files to view the results")
 
-    def visualize_response_times(self) -> None:
+        return count
+
+    def visualize_response_times(self) -> int:
         _, ax = plt.subplots(figsize=(12, 6))
 
         scenarios = list(self.results.keys())
@@ -88,10 +100,12 @@ class ResultsVisualizer:
         plt.savefig(
             self.output_dir / "01_response_times.png", dpi=300, bbox_inches="tight"
         )
-        print("Created: 01_response_times.png")
+        if not self.short_output:
+            print("Created: 01_response_times.png")
         plt.close()
+        return 1
 
-    def visualize_throughput(self) -> None:
+    def visualize_throughput(self) -> int:
         fig, ax = plt.subplots(figsize=(12, 6))
 
         scenarios = list(self.results.keys())
@@ -128,10 +142,12 @@ class ResultsVisualizer:
         plt.xticks(rotation=45, ha="right")
         plt.tight_layout()
         plt.savefig(self.output_dir / "02_throughput.png", dpi=300, bbox_inches="tight")
-        print("Created: 02_throughput.png")
+        if not self.short_output:
+            print("Created: 02_throughput.png")
         plt.close()
+        return 1
 
-    def visualize_success_rates(self) -> None:
+    def visualize_success_rates(self) -> int:
         fig, ax = plt.subplots(figsize=(12, 6))
 
         scenarios = list(self.results.keys())
@@ -195,10 +211,12 @@ class ResultsVisualizer:
         plt.savefig(
             self.output_dir / "03_success_rates.png", dpi=300, bbox_inches="tight"
         )
-        print("Created: 03_success_rates.png")
+        if not self.short_output:
+            print("Created: 03_success_rates.png")
         plt.close()
+        return 1
 
-    def visualize_queue_times(self) -> None:
+    def visualize_queue_times(self) -> int:
         fig, ax = plt.subplots(figsize=(12, 6))
 
         scenarios = list(self.results.keys())
@@ -239,10 +257,12 @@ class ResultsVisualizer:
         plt.savefig(
             self.output_dir / "04_queue_times.png", dpi=300, bbox_inches="tight"
         )
-        print("Created: 04_queue_times.png")
+        if not self.short_output:
+            print("Created: 04_queue_times.png")
         plt.close()
+        return 1
 
-    def visualize_per_server_distribution(self) -> None:
+    def visualize_per_server_distribution(self) -> int:
         multi_server_scenarios = {
             name: data
             for name, data in self.results.items()
@@ -250,8 +270,9 @@ class ResultsVisualizer:
         }
 
         if not multi_server_scenarios:
-            print("  (Skipped: No multi-server scenarios)")
-            return
+            if not self.short_output:
+                print("  (Skipped: No multi-server scenarios)")
+            return 0
 
         num_scenarios = len(multi_server_scenarios)
         fig, axes = plt.subplots(1, num_scenarios, figsize=(6 * num_scenarios, 5))
@@ -318,10 +339,12 @@ class ResultsVisualizer:
             dpi=300,
             bbox_inches="tight",
         )
-        print("Created: 05_per_server_distribution.png")
+        if not self.short_output:
+            print("Created: 05_per_server_distribution.png")
         plt.close()
+        return 1
 
-    def visualize_comparative_dashboard(self) -> None:
+    def visualize_comparative_dashboard(self) -> int:
         fig = plt.figure(figsize=(16, 12))
         gs = GridSpec(3, 3, figure=fig, hspace=0.3, wspace=0.3)
 
@@ -434,8 +457,10 @@ class ResultsVisualizer:
             y=0.995,
         )
         plt.savefig(self.output_dir / "06_dashboard.png", dpi=300, bbox_inches="tight")
-        print("Created: 06_dashboard.png")
+        if not self.short_output:
+            print("Created: 06_dashboard.png")
         plt.close()
+        return 1
 
     @staticmethod
     def _get_scenario_colors(scenarios: List[str]) -> List[str]:
@@ -480,30 +505,48 @@ def main():
         default="visualizations",
         help="Output directory for visualizations (default: same as results-dir)",
     )
+    parser.add_argument(
+        "--short-output",
+        action="store_true",
+        help="Minimal output: only final summary",
+    )
 
     args = parser.parse_args()
+    short_output = getattr(args, "short_output", False)
 
-    print("\n" + "=" * 80)
-    print("SERVER LOAD SIMULATION - RESULTS VISUALIZER")
-    print("=" * 80 + "\n")
+    if not short_output:
+        print("\n" + "=" * 80)
+        print("SERVER LOAD SIMULATION - RESULTS VISUALIZER")
+        print("=" * 80 + "\n")
 
-    visualizer = ResultsVisualizer(args.results_dir, args.output_dir)
-    print(f"\nGenerating visualizations from {len(visualizer.results)} scenarios...\n")
+    visualizer = ResultsVisualizer(
+        args.results_dir, args.output_dir, short_output=short_output
+    )
 
-    visualizer.create_all_visualizations()
+    if not short_output:
+        print(
+            f"\nGenerating visualizations from {len(visualizer.results)} scenarios...\n"
+        )
 
-    print("\n" + "=" * 80)
-    print("VISUALIZATION COMPLETE")
-    print("=" * 80)
-    print(f"\nGenerated PNG files in: {visualizer.output_dir}/")
-    print("\nVisualization files created:")
-    print("  01_response_times.png       - Response time comparison")
-    print("  02_throughput.png           - Throughput comparison")
-    print("  03_success_rates.png        - Success vs timeout rates")
-    print("  04_queue_times.png          - Queue time analysis")
-    print("  05_per_server_distribution.png - Server load distribution")
-    print("  06_dashboard.png            - Comprehensive metrics dashboard")
-    print("\n" + "=" * 80 + "\n")
+    num_visualizations = visualizer.create_all_visualizations()
+
+    if short_output:
+        print(
+            f"Generated {num_visualizations} visualizations from {len(visualizer.results)} scenarios in {visualizer.output_dir}/"
+        )
+    else:
+        print("\n" + "=" * 80)
+        print("VISUALIZATION COMPLETE")
+        print("=" * 80)
+        print(f"\nGenerated PNG files in: {visualizer.output_dir}/")
+        print("\nVisualization files created:")
+        print("  01_response_times.png       - Response time comparison")
+        print("  02_throughput.png           - Throughput comparison")
+        print("  03_success_rates.png        - Success vs timeout rates")
+        print("  04_queue_times.png          - Queue time analysis")
+        print("  05_per_server_distribution.png - Server load distribution")
+        print("  06_dashboard.png            - Comprehensive metrics dashboard")
+        print("\n" + "=" * 80 + "\n")
 
 
 if __name__ == "__main__":
